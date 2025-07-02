@@ -4,7 +4,7 @@
 
 # iPerf3 Network Performance Testing Suite
 
-A complete solution for testing network throughput between Windows and Linux systems with LACP bonding support on 10GbE.
+A complete solution for testing network throughput between Windows and Linux systems with LACP bonding support on 10GbE base cards.
 
 This iPerf3 network testing suite provides automated, cross-platform scripts for measuring network throughput between Windows and Linux systems. The Windows client scripts (install.ps1 and iperf-client.ps1) automatically download and configure iPerf3, then launch parallel test streams across all CPU cores with customizable duration, window size, and packet size parameters. On the Linux server side (install.sh and iperf-server.sh), the scripts handle dependency installation, firewall configuration, and start multiple iPerf3 server instances - one per available core - listening on consecutive ports from 5201 upward. Both sets of scripts feature automatic PATH configuration and are designed for zero-touch deployment, enabling users to go from a fresh system clone to running comprehensive network benchmarks in under a minute. The solution intelligently scales based on available hardware resources while maintaining precise per-connection metrics collection.
 
