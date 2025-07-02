@@ -4,7 +4,7 @@
 
 # iPerf3 Network Performance Testing Suite
 
-A complete solution for testing network throughput between Windows and Linux systems with LACP bonding support.
+A complete solution for testing network throughput between Windows and Linux systems with LACP bonding support on 10GbE.
 
 This iPerf3 network testing suite provides automated, cross-platform scripts for measuring network throughput between Windows and Linux systems. The Windows client scripts (install.ps1 and iperf-client.ps1) automatically download and configure iPerf3, then launch parallel test streams across all CPU cores with customizable duration, window size, and packet size parameters. On the Linux server side (install.sh and iperf-server.sh), the scripts handle dependency installation, firewall configuration, and start multiple iPerf3 server instances - one per available core - listening on consecutive ports from 5201 upward. Both sets of scripts feature automatic PATH configuration and are designed for zero-touch deployment, enabling users to go from a fresh system clone to running comprehensive network benchmarks in under a minute. The solution intelligently scales based on available hardware resources while maintaining precise per-connection metrics collection.
 
@@ -214,6 +214,115 @@ ethtool -S ethX
 # Monitor interrupts
 cat /proc/interrupts | grep ethX
 ```
+# Windows Network Tuning for High-Performance iperf3 Testing with HP NC523SFP
+
+## Windows-Specific Configuration
+
+### 1. Disabling Offloading Features
+**PowerShell Commands:**
+```powershell
+# Disable TCP Chimney Offload (recommended for benchmarking)
+Set-NetOffloadGlobalSetting -Chimney Disabled
+
+# Disable RSS (Receive Side Scaling) if experiencing core imbalance
+Disable-NetAdapterRss -Name "Ethernet*"
+
+# Disable all offloading features (requires admin)
+Set-NetAdapterAdvancedProperty -Name "Ethernet" -DisplayName "TCP Checksum Offload (IPv4)" -DisplayValue "Disabled"
+Set-NetAdapterAdvancedProperty -Name "Ethernet" -DisplayName "UDP Checksum Offload (IPv4)" -DisplayValue "Disabled"
+Set-NetAdapterAdvancedProperty -Name "Ethernet" -DisplayName "Large Send Offload V2 (IPv4)" -DisplayValue "Disabled"
+```
+
+**Note:** Some features may appear differently depending on NIC driver version.
+
+### 2. Jumbo Frames Configuration
+**GUI Method:**
+1. Open "Network Connections"
+2. Right-click your adapter → Properties → Configure
+3. Advanced tab → Find "Jumbo Packet" or "MTU"
+4. Set value to 9014 (or highest supported)
+5. Click OK and restart the connection
+
+**PowerShell Method:**
+```powershell
+Set-NetAdapterAdvancedProperty -Name "Ethernet" -DisplayName "Jumbo Packet" -DisplayValue "9014"
+Restart-NetAdapter -Name "Ethernet"
+```
+
+### 3. Windows NIC Teaming (LBFO)
+**Limitations to be aware of:**
+- Windows Server Standard edition has throughput limitations
+- Switch-independent mode doesn't require switch configuration but may have lower performance
+- Dynamic mode (LACP) requires switch support
+- This method no longer works on Windows 10, as Microsoft, in their infinite wisdom, decided to remove LACP configuration options
+
+**PowerShell Configuration:**
+```powershell
+# Create new team
+New-NetLbfoTeam -Name "iperfTeam" -TeamMembers "Ethernet1","Ethernet2" -TeamingMode SwitchIndependent -LoadBalancingAlgorithm Dynamic
+
+# Verify team status
+Get-NetLbfoTeam | Select Name, Status, TeamMembers
+```
+
+### 4. TCP Window Scaling
+**Registry Edits (requires admin):**
+```powershell
+# Enable Window Scaling
+Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" -Name "Tcp1323Opts" -Value 3
+
+# Set auto-tuning level
+Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" -Name "TCPWindowSize" -Value 64240
+Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" -Name "TcpWindowScaling" -Value 1
+
+# Set RWIN size (decimal)
+Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" -Name "GlobalMaxTcpWindowSize" -Value 16777216
+```
+
+**Note:** Reboot required for these changes to take effect.
+
+### 5. HP NC523SFP-Specific Tuning on Windows
+**Driver Settings:**
+1. Open Device Manager
+2. Expand Network Adapters
+3. Right-click HP NC523SFP → Properties
+4. Advanced tab recommended settings:
+   - Receive Buffers: 4096
+   - Transmit Buffers: 4096
+   - Interrupt Moderation: Disabled (for benchmarking)
+   - SR-IOV: Enabled (if available)
+5. Power Management tab → Disable "Allow the computer to turn off this device"
+
+### 6. Disabling Energy Efficient Ethernet
+```powershell
+Set-NetAdapterAdvancedProperty -Name "Ethernet" -DisplayName "Energy Efficient Ethernet" -DisplayValue "Disabled"
+Set-NetAdapterAdvancedProperty -Name "Ethernet" -DisplayName "Green Ethernet" -DisplayValue "Disabled"
+```
+
+### 7. Verifying Settings
+**PowerShell Commands:**
+```powershell
+# Check offloading status
+Get-NetOffloadGlobalSetting
+
+# Check adapter advanced properties
+Get-NetAdapterAdvancedProperty -Name "Ethernet"
+
+# Check TCP parameters
+Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters"
+
+# Check driver information
+Get-NetAdapter | Select Name, DriverVersion, NdisVersion
+```
+
+### Important Windows-Specific Notes:
+1. The "HP Network Configuration Utility" (if installed) may override some PowerShell settings
+2. Windows Firewall can significantly impact performance - either disable or create proper rules
+3. For consistent benchmarking results:
+   - Disable all unnecessary services
+   - Set power profile to "High Performance"
+   - Consider testing in "Windows Server Core" mode for minimal overhead
+4. Some settings may require driver-specific commands - consult HP documentation for your exact driver version
 
 ## Important Notes
 - All changes should be tested systematically - don't adjust multiple parameters at once
