@@ -97,6 +97,129 @@ sudo pkill iperf3
    - Always run install scripts as Administrator/root
    - On Windows: Right-click PowerShell → "Run as Administrator"
 
+
+# Tuning
+
+## Overview
+This section covers important network tuning considerations when running iperf3 tests with HP NC523SFP adapters in multi-core environments. Proper configuration is essential to achieve maximum throughput and accurate benchmark results.
+
+## Key Tuning Parameters
+
+### 1. Offloading Options
+**Why adjust offloading?**
+Network interface offloading features can significantly impact performance, especially at high speeds (10Gbps+). While offloading can reduce CPU usage, it may also introduce inconsistencies in benchmarking.
+
+**Recommended settings:**
+```bash
+# Disable generic segmentation offload
+ethtool -K ethX gso off
+
+# Disable TCP segmentation offload
+ethtool -K ethX tso off
+
+# Disable UDP fragmentation offload
+ethtool -K ethX ufo off
+
+# Disable generic receive offload
+ethtool -K ethX gro off
+
+# Disable large receive offload
+ethtool -K ethX lro off
+```
+
+**Note:** For production environments (non-benchmarking), you may want to re-enable some of these features after testing.
+
+### 2. MTU Configuration
+**Why adjust MTU?**
+The default 1500-byte MTU may not be optimal for 10Gbps+ networks. Jumbo frames can improve throughput but require end-to-end consistency.
+
+**Recommended settings:**
+```bash
+# Set jumbo frames (9000 bytes)
+ifconfig ethX mtu 9000
+
+# Verify setting
+ethtool -g ethX
+```
+
+**Requirements:**
+- All devices in the path must support the same MTU
+- Must be configured on both ends of the connection
+
+### 3. Windows Link Aggregation Limitations
+When testing with Windows servers/clients:
+
+- Windows Server Standard edition limits teaming to 1Gbps per connection
+- Use Windows Server Datacenter edition for full 10Gbps aggregation
+- Consider using SMB Direct (RDMA) instead of traditional teaming for best performance
+- Verify NIC teaming mode (LACP vs Static) matches switch configuration
+
+### 4. Interrupt Coalescing
+Adjust interrupt coalescing to balance between latency and CPU usage:
+
+```bash
+# View current settings
+ethtool -c ethX
+
+# Example adjustment (values in microseconds)
+ethtool -C ethX rx-usecs 50 tx-usecs 50
+```
+
+### 5. CPU Affinity and IRQ Balancing
+For multi-core systems:
+
+```bash
+# Set IRQ affinity to specific cores
+echo "mask" > /proc/irq/XX/smp_affinity
+
+# Disable irqbalance service
+systemctl stop irqbalance
+```
+
+### 6. TCP Window Size
+Adjust for high bandwidth-delay product networks:
+
+```bash
+# Increase maximum TCP window size
+sysctl -w net.core.rmem_max=16777216
+sysctl -w net.core.wmem_max=16777216
+sysctl -w net.ipv4.tcp_rmem="4096 87380 16777216"
+sysctl -w net.ipv4.tcp_wmem="4096 65536 16777216"
+```
+
+### 7. HP NC523SFP-Specific Tuning
+For optimal performance with HP NC523SFP adapters:
+
+```bash
+# Enable SR-IOV if available (requires BIOS support)
+ethtool --set-priv-flags ethX sr-iov on
+
+# Adjust ring parameters
+ethtool -G ethX rx 4096 tx 4096
+
+# Verify firmware is up to date
+ethtool -i ethX
+```
+
+## Verification Commands
+After applying settings, verify with:
+
+```bash
+# Check offloading settings
+ethtool -k ethX
+
+# Check interface statistics
+ethtool -S ethX
+
+# Monitor interrupts
+cat /proc/interrupts | grep ethX
+```
+
+## Important Notes
+- All changes should be tested systematically - don't adjust multiple parameters at once
+- Consider making changes persistent through /etc/network/interfaces or equivalent
+- Reboot may be required for some settings to take effect
+- Document all changes made for reproducibility
 ## License
 
 MIT License - Free for personal and commercial use
