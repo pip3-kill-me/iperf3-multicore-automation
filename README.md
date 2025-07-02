@@ -8,13 +8,8 @@ Here's the complete, polished `README.md` for your iPerf3 network testing suite:
 
 A complete solution for testing network throughput between Windows (server) and Linux (client) systems with LACP bonding support.
 
-## Features
 ## ✨ Features
 
-- 🚀 **Parallel testing** across all CPU cores
-- 📊 **Detailed metrics** with 2-decimal precision
-- ⏱️ **Actual vs target time** comparison
-- 🔗 **Port-specific results** for bond analysis
 - 🚀 **Parallel testing** across all CPU cores  
 - 📊 **Detailed metrics** with 2-decimal precision  
 - ⏱️ **Actual vs target time** comparison  
