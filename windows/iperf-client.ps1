@@ -97,7 +97,8 @@ try {
 
             $jsonContent = Get-Content $_.FullName -Raw
             if ([string]::IsNullOrWhiteSpace($jsonContent)) {
-                throw "Result file is empty." 
+                # Provide a more helpful error message for this specific case
+                throw "Result file is empty. (The iperf3 server may be overloaded or unable to handle the request)." 
             }
 
             $json = $jsonContent | ConvertFrom-Json
