@@ -136,12 +136,12 @@ for FILE in "$TMPDIR"/result-*.json; do
     PORT=$(basename "$FILE" | cut -d'-' -f2 | cut -d'.' -f1)
     ERROR_FILE="$TMPDIR/error-$PORT.log"
 
-    if ! jq -e . "$FILE" >/dev/null 2>&1; then
-        if grep -q "unable to connect" "$ERROR_FILE" 2>/dev/null; then
-            RESULTS+=("Port $PORT: ERROR - Unable to connect (possible bandwidth overload or packet loss)")
-        else
-            RESULTS+=("Port $PORT: ERROR - Invalid JSON output")
+    if ! jq -e . "$FILE" >/dev/null 2>&1 || grep -q 'iperf3: error' "$ERROR_FILE"; then
+        ERROR_MSG=$(<"$ERROR_FILE")
+        if [ -z "$ERROR_MSG" ]; then
+            ERROR_MSG="Unknown error"
         fi
+        RESULTS+=("Port $PORT: ERROR - $ERROR_MSG")
         continue
     fi
 
@@ -160,8 +160,10 @@ for FILE in "$TMPDIR"/result-*.json; do
         JITTER=$(printf "%.3f" "${JITTER_RAW:-0}")
         LOST_PERCENT=$(printf "%.2f" "${LOST_RAW:-0}")
 
-        RESULTS+=("Port $PORT: $BW Gbps | Jitter: $JITTER ms | Loss: $LOST_PERCENT%")
-        if [[ "$BW" =~ ^[0-9]+([.][0-9]+)?$ ]]; then
+        if [[ "$BW" == "0.00" && "$JITTER" == "0.000" && "$LOST_PERCENT" == "0.00" ]]; then
+            RESULTS+=("Port $PORT: ERROR - No traffic received (check bandwidth setting)")
+        else
+            RESULTS+=("Port $PORT: $BW Gbps | Jitter: $JITTER ms | Loss: $LOST_PERCENT%")
             TOTAL_BW=$(echo "$TOTAL_BW + $BW" | bc -l)
         fi
     else
@@ -177,11 +179,8 @@ for FILE in "$TMPDIR"/result-*.json; do
         BPS_RAW=$(echo "$SUM_BLOCK" | jq -r '.bits_per_second // 0')
         BW_CALC=$(echo "scale=2; $BPS_RAW / 1000000000" | bc -l)
         BW=$(printf "%.2f" "${BW_CALC:-0}")
-
         RESULTS+=("Port $PORT: $BW Gbps")
-        if [[ "$BW" =~ ^[0-9]+([.][0-9]+)?$ ]]; then
-            TOTAL_BW=$(echo "$TOTAL_BW + $BW" | bc -l)
-        fi
+        TOTAL_BW=$(echo "$TOTAL_BW + $BW" | bc -l)
     fi
 done
 
