@@ -5,6 +5,9 @@ Here's the complete, polished `README.md` for your iPerf3 network testing suite:
 
 ![Network Speed Test](https://img.shields.io/badge/network-testing-blue) 
 ![Multi-Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-lightgrey)
+![Debian](https://img.shields.io/badge/Debian-A81D33?style=for-the-badge&logo=debian&logoColor=white)
+![Windows](https://img.shields.io/badge/Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white)
+
 
 A complete solution for testing network throughput between Windows (server) and Linux (client) systems with LACP bonding support.
 
