@@ -80,12 +80,26 @@ trap 'rm -rf "$TMPDIR"' EXIT
 
 # --- Function to display progress bar ---
 progress_bar() {
-    local duration=$1; local elapsed=0; local bar_length=50
-    while [ $elapsed -le $duration ]; do
+    local duration=$1
+    local elapsed=0
+    local bar_length=50
+
+    while [ "$elapsed" -le "$duration" ]; do
+        # Calculate progress
         local progress=$((elapsed * bar_length / duration))
         local remaining=$((bar_length - progress))
-        printf "\r["; printf "%${progress}s" | tr ' ' '='; printf "%${remaining}s" | tr ' ' ' '; printf "] %ds/%ds" $elapsed $duration
-        sleep 1; elapsed=$((elapsed + 1))
+
+        # Build the bar string components
+        local bar_filled
+        bar_filled=$(printf "%${progress}s" | tr ' ' '=')
+        local bar_empty
+        bar_empty=$(printf "%${remaining}s" | tr ' ' ' ')
+
+        # Print the bar in one go to be safe
+        printf "\r[%s%s] %ds/%ds" "$bar_filled" "$bar_empty" "$elapsed" "$duration"
+
+        sleep 1
+        elapsed=$((elapsed + 1))
     done
     printf "\n"
 }
@@ -115,7 +129,7 @@ PROGRESS_PID=$!
 wait
 kill $PROGRESS_PID 2>/dev/null
 END_TIME=$(date +%s.%N)
-ACTUAL_DURATION=$(printf "%.2f" $(echo "$END_TIME - $START_TIME" | bc))
+ACTUAL_DURATION=$(printf "%.2f" "$(echo "$END_TIME - $START_TIME" | bc)")
 
 # --- Process results ---
 TOTAL_BW=0; RESULTS=()
@@ -163,5 +177,4 @@ echo "Cores used:      $CORES"
 echo "Test type:       $TEST_TYPE"
 echo "Target time:     $DURATION seconds"
 echo "Actual time:     $ACTUAL_DURATION seconds"
-echo "Total Bandwidth: $(printf "%.2f" $TOTAL_BW) Gbps"
-```powershell
+echo "Total Bandwidth: $(printf "%.2f" "$TOTAL_BW") Gbps"
