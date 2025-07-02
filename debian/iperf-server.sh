@@ -19,6 +19,8 @@ done
 # Open firewall ports
 sudo ufw allow $BASE_PORT:$((BASE_PORT+CORES-1))/tcp
 
-echo "Servers ready for Windows client connections"
+echo "Servers ready for client connections"
 echo "Run this on Windows:"
 echo "iperf-client.ps1 -ServerIP $(hostname -I | awk '{print $1}')"
+echo "Run this on Debian:"
+echo "iperf-client.sh -ServerIP $(hostname -I | awk '{print $1}')"

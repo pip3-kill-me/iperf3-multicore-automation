@@ -1,7 +1,7 @@
 param (
     [string]$ServerIP = "",
     [int]$Duration = 30,
-    [string]$WindowSize = "2M",
+    [string]$WindowSize = "256k",
     [string]$PacketSize = "64K"
 )
 
