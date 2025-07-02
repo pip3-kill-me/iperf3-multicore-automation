@@ -407,7 +407,5 @@ Get-NetAdapter | Select Name, DriverVersion, NdisVersion
 
 MIT License - Free for personal and commercial use
 
---- 
-<div style="text-align:center;">
-  [pip3-kill-me](https://github.com/pip3-kill-me)
-</div>
+---
+[pip3-kill-me](https://github.com/pip3-kill-me)
