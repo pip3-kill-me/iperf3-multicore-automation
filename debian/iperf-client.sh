@@ -119,7 +119,7 @@ fi
 START_TIME=$(date +%s.%N)
 for ((CORE=0; CORE<$CORES; CORE++)); do
     PORT=$((BASE_PORT + CORE))
-    taskset -c $CORE iperf3 "${IPERF_ARGS[@]}" -p "$PORT" > "$TMPDIR/result-$PORT.json" &
+    taskset -c $CORE iperf3 "${IPERF_ARGS[@]}" -p "$PORT" > "$TMPDIR/result-$PORT.json" 2> "$TMPDIR/error-$PORT.log" &
 done
 
 progress_bar $DURATION &
@@ -134,8 +134,14 @@ ACTUAL_DURATION=$(printf "%.2f" "${RAW_DURATION:-0}")
 TOTAL_BW=0; RESULTS=()
 for FILE in "$TMPDIR"/result-*.json; do
     PORT=$(basename "$FILE" | cut -d'-' -f2 | cut -d'.' -f1)
+    ERROR_FILE="$TMPDIR/error-$PORT.log"
+
     if ! jq -e . "$FILE" >/dev/null 2>&1; then
-        RESULTS+=("Port $PORT: ERROR - Invalid JSON output")
+        if grep -q "unable to connect" "$ERROR_FILE" 2>/dev/null; then
+            RESULTS+=("Port $PORT: ERROR - Unable to connect (possible bandwidth overload or packet loss)")
+        else
+            RESULTS+=("Port $PORT: ERROR - Invalid JSON output")
+        fi
         continue
     fi
 
