@@ -85,8 +85,12 @@ progress_bar() {
     local bar_length=50
 
     while [ "$elapsed" -le "$duration" ]; do
-        # Calculate progress
-        local progress=$((elapsed * bar_length / duration))
+        # Calculate progress safely, avoiding division by zero
+        if [ "$duration" -gt 0 ]; then
+            local progress=$((elapsed * bar_length / duration))
+        else
+            local progress=$bar_length
+        fi
         local remaining=$((bar_length - progress))
 
         # Build the bar string components
@@ -150,9 +154,15 @@ for FILE in "$TMPDIR"/result-*.json; do
             RESULTS+=("Port $PORT: ERROR - No UDP summary")
             continue
         fi
-        BW=$(echo "$SUM_BLOCK" | jq -r '.bits_per_second/1e9' | xargs printf "%.2f")
-        JITTER=$(echo "$SUM_BLOCK" | jq -r '.jitter_ms' | xargs printf "%.3f")
-        LOST_PERCENT=$(echo "$SUM_BLOCK" | jq -r '.lost_percent' | xargs printf "%.2f")
+        # Default to 0 if value is null, then format
+        BPS_RAW=$(echo "$SUM_BLOCK" | jq -r '.bits_per_second // 0')
+        JITTER_RAW=$(echo "$SUM_BLOCK" | jq -r '.jitter_ms // 0')
+        LOST_RAW=$(echo "$SUM_BLOCK" | jq -r '.lost_percent // 0')
+
+        BW=$(printf "%.2f" "$(echo "$BPS_RAW / 1e9" | bc -l)")
+        JITTER=$(printf "%.3f" "$JITTER_RAW")
+        LOST_PERCENT=$(printf "%.2f" "$LOST_RAW")
+
         RESULTS+=("Port $PORT: $BW Gbps | Jitter: $JITTER ms | Loss: $LOST_PERCENT%")
         # Safely add to total
         if [[ "$BW" =~ ^[0-9]+([.][0-9]+)?$ ]]; then
@@ -169,7 +179,9 @@ for FILE in "$TMPDIR"/result-*.json; do
             RESULTS+=("Port $PORT: ERROR - No TCP summary")
             continue
         fi
-        BW=$(echo "$SUM_BLOCK" | jq -r '.bits_per_second/1e9' | xargs printf "%.2f")
+        # Default to 0 if value is null, then format
+        BPS_RAW=$(echo "$SUM_BLOCK" | jq -r '.bits_per_second // 0')
+        BW=$(printf "%.2f" "$(echo "$BPS_RAW / 1e9" | bc -l)")
         RESULTS+=("Port $PORT: $BW Gbps")
         # Safely add to total
         if [[ "$BW" =~ ^[0-9]+([.][0-9]+)?$ ]]; then
@@ -282,14 +294,14 @@ try {
                 $json = $jsonContent | ConvertFrom-Json
                 if ($Udp.IsPresent) {
                     $sum = $json.end.sum
-                    $gbps = [math]::Round($sum.bits_per_second / 1e9, 2)
-                    $jitter = [math]::Round($sum.jitter_ms, 3)
-                    $loss = [math]::Round($sum.lost_percent, 2)
+                    $gbps = [math]::Round(($sum.bits_per_second | Out-Null; $sum.bits_per_second) / 1e9, 2)
+                    $jitter = [math]::Round(($sum.jitter_ms | Out-Null; $sum.jitter_ms), 3)
+                    $loss = [math]::Round(($sum.lost_percent | Out-Null; $sum.lost_percent), 2)
                     $Results += "Port $port`: $gbps Gbps | Jitter: $jitter ms | Loss: $loss`%"
                     $TotalBandwidthGbps += $gbps
                 } else {
                     $sumBlock = if ($Reverse.IsPresent) { $json.end.sum_sent } else { $json.end.sum_received }
-                    $gbps = [math]::Round($sumBlock.bits_per_second / 1e9, 2)
+                    $gbps = [math]::Round(($sumBlock.bits_per_second | Out-Null; $sumBlock.bits_per_second) / 1e9, 2)
                     $Results += "Port $port`: $gbps Gbps"
                     $TotalBandwidthGbps += $gbps
                 }
