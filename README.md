@@ -1,23 +1,24 @@
-Here's a comprehensive `README.md` file for your iPerf3 testing repository:
-
-```markdown
 # iPerf3 Network Performance Testing Suite
+
+![Network Speed Test](https://img.shields.io/badge/network-testing-blue) 
+![Multi-Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-lightgrey)
 
 A complete solution for testing network throughput between Windows (server) and Linux (client) systems with LACP bonding support.
 
-## Features
+## ✨ Features
 
-- 🚀 **Parallel testing** across all CPU cores
-- 📊 **Detailed metrics** with 2-decimal precision
-- ⏱️ **Actual vs target time** comparison
-- 🔗 **Port-specific results** for bond analysis
+- 🚀 **Parallel testing** across all CPU cores  
+- 📊 **Detailed metrics** with 2-decimal precision  
+- ⏱️ **Actual vs target time** comparison  
+- 🔗 **Port-specific results** for bond analysis  
+- 🛠️ **Self-cleaning** temporary files  
 
 ## Prerequisites
 
 ### Windows Server
-- Windows 10/11 Pro/Enterprise or Server 2016+
-- iPerf3 for Windows ([download](https://iperf.fr/))
-- PowerShell 5.1+
+- Windows 10/11 Pro/Enterprise or Server 2016+  
+- iPerf3 for Windows ([official download](https://iperf.fr/iperf-download.php))  
+- PowerShell 5.1+  
 
 ### Linux Client
 ```bash
@@ -114,20 +115,12 @@ Total speed:   18.79 Gbps
    Test-NetConnection -Port 5201 -ComputerName <client_ip>
    ```
 
+## Advanced Features
+
+- **Multi-Path TCP**: Supported in iPerf3 3.19+ with `-m` flag
+- **Zero-copy mode**: Reduce CPU usage with `-Z`
+- **JSON output**: Machine-readable results with `-J`
+
 ## License
 
 MIT License - Free for personal and enterprise use
-
-```
-
-### Key Sections Included:
-1. **Badges** - Visual indicators for compatibility
-2. **Prerequisites** - Clear installation requirements
-3. **Usage Guide** - Step-by-step execution flow
-4. **Sample Output** - Expected results format
-5. **Configuration Table** - Quick parameter reference
-6. **Troubleshooting** - Common solutions
-7. **File Structure** - Repository organization
-
-This README provides both quick-start instructions and detailed reference information suitable for both beginners and advanced users. The markdown formatting ensures proper display on GitHub/GitLab.
-```
