@@ -1,5 +1,3 @@
-Here's the complete, polished `README.md` for your iPerf3 network testing suite:
-
 ```markdown
 # iPerf3 Network Performance Test Suite
 
