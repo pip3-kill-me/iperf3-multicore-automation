@@ -22,7 +22,7 @@ This iPerf3 network testing suite provides automated, cross-platform scripts for
 
 ```bash
 # Clone repository
-git clone https://github.com/pip3-kill-me/iperf3-multicore-automation
+git clone https://github.com/yourrepo/iperf3-network-test.git
 cd iperf3-network-test/debian
 
 # Install and start server (as root)
@@ -63,7 +63,7 @@ iperf-client.ps1 -ServerIP 192.168.1.100 -Duration 60
 
 ### **On Debian Client (iperf-multicore-client.sh)**
 ```bash
-./iperf-multicore-client.sh \-s \<IP\> \[-t \<seconds\>\] \[-w \<size\>\] \[-l \<size\>\]
+./iperf-multicore-client.sh -s <address> -t <seconds> -w <size> -l <size>
 ```
 | Parameter | Default | Description |
 | :---- | :---- | :---- |
@@ -75,9 +75,9 @@ iperf-client.ps1 -ServerIP 192.168.1.100 -Duration 60
 ### **Windows Client Options**
 
 ```powershell
-.\iperf-client.ps1 -ServerIP <IP> `
-    [-Duration <seconds>] `
-    [-WindowSize <size>] `
+.\iperf-client.ps1 -ServerIP <IP> 
+    [-Duration <seconds>] 
+    [-WindowSize <size>] 
     [-PacketSize <size>]
 ```
 
