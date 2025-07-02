@@ -30,5 +30,14 @@ chmod +x /usr/local/bin/iperf-server.sh || {
     exit 1
 }
 
+# Install client script
+echo "Installing client control script..."
+cp iperf-client.sh /usr/local/bin/ && \
+chmod +x /usr/local/bin/iperf-client.sh || {
+    echo "Failed to install client script" >&2
+    exit 1
+}
+
 echo -e "\nDebian server setup complete!"
-echo "To start: iperf-server.sh"
+echo "To start server: iperf-server.sh"
+echo "To start client: iperf-client.sh"
