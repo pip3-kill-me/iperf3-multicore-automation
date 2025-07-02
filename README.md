@@ -1,22 +1,20 @@
 ![Network Speed Test](https://img.shields.io/badge/network-testing-blue?style=for-the-badge)
 ![Multi-Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-lightgrey?style=for-the-badge)
-![Debian](https://img.shields.io/badge/Debian-A81D33?style=for-the-badge&logo=debian&logoColor=white)
-![Windows](https://img.shields.io/badge/Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white)
 
 ```markdown
 # iPerf3 Network Performance Testing Suite
 
+A complete solution for testing network throughput between Windows and Linux systems with LACP bonding support.
 
-A complete solution for testing network throughput between Windows (server) and Linux (client) systems with LACP bonding support.
+This iPerf3 network testing suite provides automated, cross-platform scripts for measuring network throughput between Windows and Linux systems. The Windows client scripts (install.ps1 and iperf-client.ps1) automatically download and configure iPerf3, then launch parallel test streams across all CPU cores with customizable duration, window size, and packet size parameters. On the Linux server side (install.sh and iperf-server.sh), the scripts handle dependency installation, firewall configuration, and start multiple iPerf3 server instances - one per available core - listening on consecutive ports from 5201 upward. Both sets of scripts feature automatic PATH configuration and are designed for zero-touch deployment, enabling users to go from a fresh system clone to running comprehensive network benchmarks in under a minute. The solution intelligently scales based on available hardware resources while maintaining precise per-connection metrics collection.
 
 ## ✨ Features
 
 - 🚀 **Parallel testing** across all CPU cores  
-- 📊 **Detailed metrics** with 2-decimal precision  
+- 📊 **Detailed metrics** 
 - ⏱️ **Actual vs target time** comparison  
-- 🔗 **Port-specific results** for bond analysis  
-- 🛠️ **Self-cleaning** temporary files  
-
+- 🔗 **Port-specific results** for **bond** analysis  
+```
 ## Quick Start
 
 ### 1. On Linux Server (Debian/Ubuntu)
