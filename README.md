@@ -1,21 +1,25 @@
 Here's the complete, polished `README.md` for your iPerf3 network testing suite:
 
 ```markdown
-# iPerf3 Network Performance Test Suite
+# iPerf3 Network Performance Testing Suite
 
-[![Network Testing](https://img.shields.io/badge/network-testing-blue)](https://github.com/yourrepo/iperf3-network-test) 
-[![Multi-Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-lightgrey)](https://github.com/yourrepo/iperf3-network-test)
+![Network Speed Test](https://img.shields.io/badge/network-testing-blue) 
+![Multi-Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-lightgrey)
 
-Automated network throughput testing between Windows (client) and Linux (server) systems.
+A complete solution for testing network throughput between Windows (server) and Linux (client) systems with LACP bonding support.
 
 ## Features
+## ✨ Features
 
-- ⚡ **One-command setup** for both platforms
-- 🔄 **Auto-installs iPerf3** (Windows + Linux)
-- 🖥️ **Multi-core parallel testing**
-- 📊 **Real-time performance metrics**
-- 🔥 **Zero configuration required**
-contained** with no manual configuration  
+- 🚀 **Parallel testing** across all CPU cores
+- 📊 **Detailed metrics** with 2-decimal precision
+- ⏱️ **Actual vs target time** comparison
+- 🔗 **Port-specific results** for bond analysis
+- 🚀 **Parallel testing** across all CPU cores  
+- 📊 **Detailed metrics** with 2-decimal precision  
+- ⏱️ **Actual vs target time** comparison  
+- 🔗 **Port-specific results** for bond analysis  
+- 🛠️ **Self-cleaning** temporary files  
 
 ## Quick Start
 
