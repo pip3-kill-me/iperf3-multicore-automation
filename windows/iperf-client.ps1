@@ -379,4 +379,3 @@ try {
         Remove-Item -Recurse -Force $TempDir.FullName
     }
 }
-#
