@@ -1,5 +1,3 @@
-# Filename: iperf-multicore-client.ps1
-
 # --- Define Parameters ---
 param(
     [string]$ServerIP,
