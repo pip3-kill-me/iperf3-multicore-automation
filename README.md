@@ -20,7 +20,7 @@ This iPerf3 network testing suite provides automated, cross-platform scripts for
 ### 1. On Linux Server (Debian/Ubuntu)
 ```bash
 # Clone repository
-git clone https://github.com/yourrepo/iperf3-network-test.git
+git clone https://github.com/pip3-kill-me/iperf3-multicore-automation.git
 cd iperf3-network-test/debian
 
 # Install and start server (as root)
@@ -31,7 +31,7 @@ iperf-server.sh
 ### 2. On Windows Client (PowerShell as Admin)
 ```powershell
 # Clone repository
-git clone https://github.com/yourrepo/iperf3-network-test.git
+git clone https://github.com/pip3-kill-me/iperf3-multicore-automation.git
 cd iperf3-network-test\windows
 
 # Install and run client
