@@ -1,126 +1,105 @@
-# iPerf3 Network Performance Testing Suite
+Here's the complete, polished `README.md` for your iPerf3 network testing suite:
 
-![Network Speed Test](https://img.shields.io/badge/network-testing-blue) 
+```markdown
+# iPerf3 Network Performance Test Suite
+
+![Network Testing](https://img.shields.io/badge/network-testing-blue)
 ![Multi-Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-lightgrey)
 
-A complete solution for testing network throughput between Windows (server) and Linux (client) systems with LACP bonding support.
+Automated network throughput testing between Windows (client) and Linux (server) systems with parallel multi-core support.
 
-## ✨ Features
+## Features
 
-- 🚀 **Parallel testing** across all CPU cores  
-- 📊 **Detailed metrics** with 2-decimal precision  
-- ⏱️ **Actual vs target time** comparison  
-- 🔗 **Port-specific results** for bond analysis  
-- 🛠️ **Self-cleaning** temporary files  
+- ⚡ **One-command setup** for both Windows and Linux  
+- 🔄 **Automatic iPerf3 installation** on both platforms  
+- 🖥️ **Multi-core parallel testing** for maximum throughput  
+- 📊 **Real-time performance metrics**  
+- 🔥 **Self-contained** with no manual configuration  
 
-## Prerequisites
+## Quick Start
 
-### Windows Server
-- Windows 10/11 Pro/Enterprise or Server 2016+  
-- iPerf3 for Windows ([official download](https://iperf.fr/iperf-download.php))  
-- PowerShell 5.1+  
-
-### Linux Client
+### 1. On Linux Server (Debian/Ubuntu)
 ```bash
-sudo apt update && sudo apt install -y iperf3 jq bc
+# Clone repository
+git clone https://github.com/yourrepo/iperf3-network-test.git
+cd iperf3-network-test/debian
+
+# Install and start server (as root)
+sudo bash install.sh
+iperf-server.sh
 ```
 
-## File Structure
-
-```
-iperf-network-test/
-├── windows/
-│   └── iperf-server.ps1       # Windows server script
-├── linux/
-│   └── iperf-client.sh        # Linux client script
-└── README.md                  # This file
-```
-
-## Usage
-
-### 1. Start Windows Server
-
-Run in PowerShell **as Administrator**:
-
+### 2. On Windows Client (PowerShell as Admin)
 ```powershell
-.\iperf-server.ps1
+# Clone repository
+git clone https://github.com/yourrepo/iperf3-network-test.git
+cd iperf3-network-test\windows
+
+# Install and run client
+.\install.ps1
+iperf-client.ps1 -ServerIP 192.168.1.100 -Duration 60
 ```
 
-Sample output:
+## Detailed Usage
 
+### Windows Client Options
+```powershell
+.\iperf-client.ps1 -ServerIP <IP> `
+    [-Duration <seconds>] `
+    [-WindowSize <size>] `
+    [-PacketSize <size>]
 ```
-Starting 8 iPerf3 servers on ports 5201 to 5208
-Servers ready. Connect from Linux using:
-bash iperf-client.sh 192.168.2.100
-```
 
-### 2. Run Linux Client
+| Parameter       | Default | Description                  |
+|-----------------|---------|------------------------------|
+| `-ServerIP`     | Required| Linux server IP address       |
+| `-Duration`     | 30      | Test duration in seconds      |
+| `-WindowSize`   | 2M      | TCP window size (e.g., 1M, 8M)|
+| `-PacketSize`   | 64K     | Packet size (e.g., 128K)      |
 
+### Linux Server Management
 ```bash
-./iperf-client.sh <server_ip> [-t duration] [-w window_size] [-l packet_size]
+# Start server (default uses all cores)
+iperf-server.sh
+
+# Stop all iPerf3 servers
+sudo pkill iperf3
 ```
 
-Example:
+## Technical Details
 
-```bash
-./iperf-client.sh 192.168.2.100 -t 10 -w 8M -l 128K
-```
+**Windows Components:**
+- Automatically downloads iPerf3 v3.19
+- Installs to `Program Files\iperf3`
+- Adds to system PATH
+- Client script stored in `%USERPROFILE%\Scripts`
 
-### 3. Sample Output
-
-```
-=== Individual Results ===
-Port 5201: 4.44 Gbps
-Port 5202: 4.79 Gbps
-Port 5203: 4.75 Gbps
-Port 5204: 4.81 Gbps
-
-=== Summary ===
-Cores used:    4
-Target time:   10 seconds
-Actual time:   10.03 seconds
-Total speed:   18.79 Gbps
-```
-
-## Configuration Options
-
-| Parameter         | Default | Description              |
-| ----------------- | ------- | ------------------------ |
-| `-t` / `--time`   | 30      | Test duration in seconds |
-| `-w` / `--window` | 2M      | TCP window size          |
-| `-l` / `--length` | 64K     | Packet size              |
+**Linux Components:**
+- Installs via package manager (apt)
+- Opens firewall ports 5201-5300
+- Server script installed to `/usr/local/bin`
 
 ## Troubleshooting
 
-### Common Issues
-
-1. **"Port null" in results**:
-
-   - Ensure `jq` is installed (`sudo apt install jq`)
-   - Verify no file permission issues in `/tmp`
+**Common Issues:**
+1. **Connection refused**:
+   - Verify firewall rules on Linux: `sudo ufw status`
+   - Test basic connectivity: `Test-NetConnection -ComputerName <IP> -Port 5201`
 
 2. **Low throughput**:
-
    ```bash
-   # Check NIC settings
+   # On Linux:
    ethtool <interface>
-   # Verify CPU affinity
-   taskset -p <pid>
-   ```
-
-3. **Connection refused**:
-
-   ```powershell
    # On Windows:
-   Test-NetConnection -Port 5201 -ComputerName <client_ip>
+   Get-NetAdapter | Where Status -eq "Up" | Disable-NetAdapterPowerManagement
    ```
 
-## Advanced Features
-
-- **Multi-Path TCP**: Supported in iPerf3 3.19+ with `-m` flag
-- **Zero-copy mode**: Reduce CPU usage with `-Z`
-- **JSON output**: Machine-readable results with `-J`
+3. **Permission errors**:
+   - Always run install scripts as Administrator/root
+   - On Windows: Right-click PowerShell → "Run as Administrator"
 
 ## License
 
-MIT License - Free for personal and enterprise use
+MIT License - Free for personal and commercial use
+```
+
