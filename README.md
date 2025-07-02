@@ -3,7 +3,7 @@ Here's the complete, polished `README.md` for your iPerf3 network testing suite:
 ```markdown
 # iPerf3 Network Performance Testing Suite
 
-![Network Speed Test]({https://img.shields.io/badge/network-testing-blue}) 
+<img src="{https://img.shields.io/badge/network-testing-blue}" />
 ![Multi-Platform]({https://img.shields.io/badge/platform-Windows%20%7C%20Linux-lightgrey})
 
 A complete solution for testing network throughput between Windows (server) and Linux (client) systems with LACP bonding support.
