@@ -1,3 +1,226 @@
+#!/bin/bash
+# Filename: iperf-multicore-client.sh
+
+# Force C locale for predictable numeric formats (e.g., using . for decimals)
+export LC_ALL=C
+
+# --- Check for required commands ---
+for cmd in bc jq iperf3; do
+    if ! command -v $cmd &> /dev/null; then
+        echo "Error: $cmd is not installed. Please run:"
+        echo "sudo apt update && sudo apt install -y bc jq iperf3"
+        exit 1
+    fi
+done
+
+# --- Default values ---
+SERVER_IP=""
+DURATION=30
+WINDOW_SIZE="256k"
+PACKET_SIZE="64K"
+BASE_PORT=5201
+CORES=$(nproc)
+TIMEFORMAT="%R"
+UDP_MODE=false
+UDP_BANDWIDTH="1G" # Default UDP bandwidth per stream
+REVERSE_MODE=false
+BIDIRECTIONAL_MODE=false
+
+# --- Function to display usage ---
+usage() {
+    echo "Usage: $0 -s <server_ip> [options]"
+    echo "Options:"
+    echo "  -s, --server <ip>      The IP address of the iperf3 server (required)."
+    echo "  -t, --time <secs>      The duration of the test in seconds (default: $DURATION)."
+    echo "  -w, --window <size>    The window size (e.g., 256k) (default: $WINDOW_SIZE)."
+    echo "  -l, --length <size>    The packet size (e.g., 64K) (default: $PACKET_SIZE)."
+    echo "  -U, --udp              Use UDP instead of TCP."
+    echo "  -b, --bandwidth <rate> Target bandwidth for UDP tests (e.g., 100M, 1G) (default: $UDP_BANDWIDTH)."
+    echo "  -R, --reverse          Run in reverse mode (server sends, client receives)."
+    echo "  -d, --bidirectional    Run a bidirectional test simultaneously."
+    exit 1
+}
+
+# --- Parse Command-Line Arguments ---
+while [[ $# -gt 0 ]]; do
+    key="$1"
+    case $key in
+        -s|--server) SERVER_IP="$2"; shift 2 ;;
+        -t|--time) DURATION="$2"; shift 2 ;;
+        -w|--window) WINDOW_SIZE="$2"; shift 2 ;;
+        -l|--length) PACKET_SIZE="$2"; shift 2 ;;
+        -b|--bandwidth) UDP_BANDWIDTH="$2"; shift 2 ;;
+        -U|--udp) UDP_MODE=true; shift ;;
+        -R|--reverse) REVERSE_MODE=true; shift ;;
+        -d|--bidirectional) BIDIRECTIONAL_MODE=true; shift ;;
+        *) echo "Unknown parameter: $1"; usage ;;
+    esac
+done
+
+# --- Validate required arguments ---
+if [ -z "$SERVER_IP" ]; then
+    echo "Error: Server IP is a required argument."
+    usage
+fi
+
+# --- Announce test type ---
+TEST_TYPE="TCP"
+if [ "$UDP_MODE" = true ]; then
+    TEST_TYPE="UDP"
+fi
+if [ "$REVERSE_MODE" = true ]; then
+    TEST_TYPE="$TEST_TYPE (Reverse)"
+elif [ "$BIDIRECTIONAL_MODE" = true ]; then
+    TEST_TYPE="$TEST_TYPE (Bidirectional)"
+fi
+
+echo "Starting $CORES parallel $TEST_TYPE clients to $SERVER_IP..."
+echo "Test duration: $DURATION seconds per client"
+
+# --- Create temp directory for results ---
+TMPDIR=$(mktemp -d)
+trap 'rm -rf -- "$TMPDIR"' EXIT
+
+# --- Function to display progress bar ---
+progress_bar() {
+    local duration=$1
+    local elapsed=0
+    local bar_length=50
+
+    while [ "$elapsed" -le "$duration" ]; do
+        # Calculate progress safely, avoiding division by zero
+        if [ "$duration" -gt 0 ]; then
+            local progress=$((elapsed * bar_length / duration))
+        else
+            local progress=$bar_length
+        fi
+        local remaining=$((bar_length - progress))
+
+        # Build the bar string components
+        local bar_filled
+        bar_filled=$(printf "%${progress}s" | tr ' ' '=')
+        local bar_empty
+        bar_empty=$(printf "%${remaining}s" | tr ' ' ' ')
+
+        # Print the bar in one go to be safe
+        printf "\r[%s%s] %ds/%ds" "$bar_filled" "$bar_empty" "$elapsed" "$duration"
+
+        sleep 1
+        elapsed=$((elapsed + 1))
+    done
+    printf "\n"
+}
+
+# --- Run tests in parallel ---
+IPERF_ARGS=("-c" "$SERVER_IP" "-t" "$DURATION" "--json")
+if [ "$UDP_MODE" = true ]; then
+    IPERF_ARGS+=("-u" "-b" "$UDP_BANDWIDTH")
+else
+    IPERF_ARGS+=("-w" "$WINDOW_SIZE" "-l" "$PACKET_SIZE")
+fi
+if [ "$REVERSE_MODE" = true ]; then
+    IPERF_ARGS+=("-R")
+fi
+if [ "$BIDIRECTIONAL_MODE" = true ]; then
+    IPERF_ARGS+=("-d")
+fi
+
+START_TIME=$(date +%s.%N)
+for ((CORE=0; CORE<$CORES; CORE++)); do
+    PORT=$((BASE_PORT + CORE))
+    taskset -c $CORE iperf3 "${IPERF_ARGS[@]}" -p "$PORT" > "$TMPDIR/result-$PORT.json" 2> "$TMPDIR/error-$PORT.log" &
+done
+
+progress_bar $DURATION &
+PROGRESS_PID=$!
+wait
+kill $PROGRESS_PID 2>/dev/null
+END_TIME=$(date +%s.%N)
+# Use bc -l for floating point math
+RAW_DURATION=$(echo "$END_TIME - $START_TIME" | bc -l)
+ACTUAL_DURATION=$(printf "%.2f" "${RAW_DURATION:-0}")
+
+
+# --- Process results ---
+TOTAL_BW=0; RESULTS=()
+for FILE in "$TMPDIR"/result-*.json; do
+    PORT=$(basename "$FILE" | cut -d'-' -f2 | cut -d'.' -f1)
+    ERROR_FILE="$TMPDIR/error-$PORT.log"
+
+    if ! jq -e . "$FILE" >/dev/null 2>&1 || [ -s "$ERROR_FILE" ]; then
+        ERROR_MSG=$(<"$ERROR_FILE")
+        if [ -z "$ERROR_MSG" ]; then
+            ERROR_MSG="Invalid JSON or unknown error"
+        fi
+        RESULTS+=("Port $PORT: ERROR - $ERROR_MSG")
+        continue
+    fi
+
+    if [ "$UDP_MODE" = true ]; then
+        # UDP results parsing
+        SUM_BLOCK=$(jq '.end.sum' "$FILE")
+        if [ -z "$SUM_BLOCK" ] || [ "$SUM_BLOCK" = "null" ]; then
+            RESULTS+=("Port $PORT: ERROR - No UDP summary")
+            continue
+        fi
+        # Default to 0 if value is null
+        BPS_RAW=$(echo "$SUM_BLOCK" | jq -r '.bits_per_second // 0')
+        JITTER_RAW=$(echo "$SUM_BLOCK" | jq -r '.jitter_ms // 0')
+        LOST_RAW=$(echo "$SUM_BLOCK" | jq -r '.lost_percent // 0')
+
+        # Separate calculation from formatting for robustness
+        BW_CALC=$(echo "scale=2; $BPS_RAW / 1000000000" | bc -l)
+        BW=$(printf "%.2f" "${BW_CALC:-0}")
+        JITTER=$(printf "%.3f" "${JITTER_RAW:-0}")
+        LOST_PERCENT=$(printf "%.2f" "${LOST_RAW:-0}")
+
+        if [[ "$BW" == "0.00" && "$JITTER" == "0.000" && "$LOST_PERCENT" == "0.00" ]]; then
+            RESULTS+=("Port $PORT: ERROR - No traffic received (possible bandwidth overload)")
+        else
+            RESULTS+=("Port $PORT: $BW Gbps | Jitter: $JITTER ms | Loss: $LOST_PERCENT%")
+            # Safely add to total, using bc -l for floating point math
+            if [[ "$BW" =~ ^[0-9]+([.][0-9]+)?$ ]]; then
+                TOTAL_BW=$(echo "$TOTAL_BW + $BW" | bc -l)
+            fi
+        fi
+    else
+        # TCP results parsing
+        SUM_BLOCK_PATH='.end.sum_received'
+        if [ "$REVERSE_MODE" = true ]; then
+            SUM_BLOCK_PATH='.end.sum_sent'
+        fi
+        SUM_BLOCK=$(jq "$SUM_BLOCK_PATH" "$FILE")
+        if [ -z "$SUM_BLOCK" ] || [ "$SUM_BLOCK" = "null" ]; then
+            RESULTS+=("Port $PORT: ERROR - No TCP summary")
+            continue
+        fi
+        # Default to 0 if value is null
+        BPS_RAW=$(echo "$SUM_BLOCK" | jq -r '.bits_per_second // 0')
+        
+        # Separate calculation from formatting for robustness
+        BW_CALC=$(echo "scale=2; $BPS_RAW / 1000000000" | bc -l)
+        BW=$(printf "%.2f" "${BW_CALC:-0}")
+
+        RESULTS+=("Port $PORT: $BW Gbps")
+        # Safely add to total, using bc -l for floating point math
+        if [[ "$BW" =~ ^[0-9]+([.][0-9]+)?$ ]]; then
+            TOTAL_BW=$(echo "$TOTAL_BW + $BW" | bc -l)
+        fi
+    fi
+done
+
+# --- Display summary ---
+echo -e "\n=== Individual Results ==="
+printf "%s\n" "${RESULTS[@]}"
+echo -e "\n=== Summary ==="
+echo "Cores used:      $CORES"
+echo "Test type:       $TEST_TYPE"
+echo "Target time:     $DURATION seconds"
+echo "Actual time:     $ACTUAL_DURATION seconds"
+# Format the final bandwidth number into a variable first to avoid shell parsing issues on exit
+TOTAL_BW_FORMATTED=$(printf "%.2f" "${TOTAL_BW:-0}")
+echo "Total Bandwidth: ${TOTAL_BW_FORMATTED} Gbps"
+```powershell
 # Filename: iperf-multicore-client.ps1
 
 # --- Define Parameters ---
@@ -59,6 +282,7 @@ try {
     for ($i = 0; $i -lt $Cores; $i++) {
         $Port = $BasePort + $i
         $OutputFile = Join-Path $TempDir.FullName "result-$Port.json"
+        $ErrorFile = Join-Path $TempDir.FullName "error-$Port.log"
         $finalArgs = $baseArgs + @("-p", $Port, "--affinity", $i)
         
         $ProcessArgs = @{
@@ -67,6 +291,7 @@ try {
             NoNewWindow = $true
             PassThru = $true
             RedirectStandardOutput = $OutputFile
+            RedirectStandardError = $ErrorFile
         }
         $Processes += Start-Process @ProcessArgs
     }
@@ -86,26 +311,55 @@ try {
     $TotalBandwidthGbps = 0.0
     Get-ChildItem -Path $TempDir.FullName -Filter "*.json" | ForEach-Object {
         $port = $_.BaseName -replace 'result-'
+        $errorFile = Join-Path $_.DirectoryName "error-$port.log"
         try {
+            # Check for iperf3 errors first
+            if ((Test-Path $errorFile) -and ((Get-Item $errorFile).Length -gt 0)) {
+                $errorMsg = Get-Content $errorFile -Raw
+                throw $errorMsg.Trim()
+            }
+
             $jsonContent = Get-Content $_.FullName -Raw
-            if (-not [string]::IsNullOrWhiteSpace($jsonContent)) {
-                $json = $jsonContent | ConvertFrom-Json
-                if ($Udp.IsPresent) {
-                    $sum = $json.end.sum
-                    $gbps = [math]::Round($sum.bits_per_second / 1e9, 2)
-                    $jitter = [math]::Round($sum.jitter_ms, 3)
-                    $loss = [math]::Round($sum.lost_percent, 2)
+            if ([string]::IsNullOrWhiteSpace($jsonContent)) {
+                throw "Result file is empty." 
+            }
+
+            $json = $jsonContent | ConvertFrom-Json
+            
+            # Check for the top-level error property in iperf3's JSON output
+            if ($null -ne $json.error) {
+                throw $json.error
+            }
+
+            if ($Udp.IsPresent) {
+                if ($null -eq $json.end.sum) { throw "No UDP summary block found." }
+                $sum = $json.end.sum
+                
+                $bps_raw = if ($null -ne $sum.bits_per_second) { $sum.bits_per_second } else { 0 }
+                $jitter_raw = if ($null -ne $sum.jitter_ms) { $sum.jitter_ms } else { 0 }
+                $loss_raw = if ($null -ne $sum.lost_percent) { $sum.lost_percent } else { 0 }
+
+                $gbps = [math]::Round($bps_raw / 1e9, 2)
+                $jitter = [math]::Round($jitter_raw, 3)
+                $loss = [math]::Round($loss_raw, 2)
+
+                if ($gbps -eq 0 -and $jitter -eq 0 -and $loss -eq 0) {
+                    $Results += "Port $port`: ERROR - No traffic received (possible bandwidth overload)"
+                } else {
                     $Results += "Port $port`: $gbps Gbps | Jitter: $jitter ms | Loss: $loss`%"
                     $TotalBandwidthGbps += $gbps
-                } else {
-                    $sumBlock = if ($Reverse.IsPresent) { $json.end.sum_sent } else { $json.end.sum_received }
-                    $gbps = [math]::Round($sumBlock.bits_per_second / 1e9, 2)
-                    $Results += "Port $port`: $gbps Gbps"
-                    $TotalBandwidthGbps += $gbps
                 }
-            } else { throw "Empty file" }
+            } else { # TCP Mode
+                $sumBlock = if ($Reverse.IsPresent) { $json.end.sum_sent } else { $json.end.sum_received }
+                if ($null -eq $sumBlock) { throw "No TCP summary block found." }
+
+                $bps_raw = if ($null -ne $sumBlock.bits_per_second) { $sumBlock.bits_per_second } else { 0 }
+                $gbps = [math]::Round($bps_raw / 1e9, 2)
+                $Results += "Port $port`: $gbps Gbps"
+                $TotalBandwidthGbps += $gbps
+            }
         } catch {
-            $Results += "Port $port`: ERROR - Could not parse result file."
+            $Results += "Port $port`: ERROR - $($_.Exception.Message)"
         }
     }
 

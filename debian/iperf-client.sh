@@ -161,7 +161,7 @@ for FILE in "$TMPDIR"/result-*.json; do
         LOST_PERCENT=$(printf "%.2f" "${LOST_RAW:-0}")
 
         if [[ "$BW" == "0.00" && "$JITTER" == "0.000" && "$LOST_PERCENT" == "0.00" ]]; then
-            RESULTS+=("Port $PORT: ERROR - No traffic received (possible bandwidht overload)")
+            RESULTS+=("Port $PORT: ERROR - No traffic received (possible bandwidth overload)")
         else
             RESULTS+=("Port $PORT: $BW Gbps | Jitter: $JITTER ms | Loss: $LOST_PERCENT%")
             TOTAL_BW=$(echo "$TOTAL_BW + $BW" | bc -l)
