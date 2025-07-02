@@ -1,3 +1,4 @@
+
 ![Network Speed Test](https://img.shields.io/badge/network-testing-blue?style=for-the-badge)
 
 ![Multi-Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-lightgrey?style=for-the-badge)
@@ -17,24 +18,41 @@ This iPerf3 network testing suite provides automated, cross-platform scripts for
 
 ## Quick Start
 
-### 1. On Linux Server (Debian/Ubuntu)
+### 1. Server Setup (Debian/Ubuntu)
 
 ```bash
 # Clone repository
-git clone https://github.com/pip3-kill-me/iperf3-multicore-automation
-cd iperf3-multicore-automation/debian
+git clone https://github.com/yourrepo/iperf3-network-test.git
+cd iperf3-network-test/debian
 
 # Install and start server (as root)
 sudo bash install.sh
 iperf-server.sh
 ```
 
+### 2. Server Setup (Windows)
+```powershell
+.\iperf-servers.ps1 [-BasePort <port>] [-Cores <number>]
+```
+| Parameter    | Default               | Description                                  |
+|-------------|-----------------------|----------------------------------------------|
+| `-BasePort` | `5201`                | Starting port for iPerf3 servers.            |
+| `-Cores`    | *(Auto-detected)*     | Number of server instances (one per core).   |
+
+**Example**:  
+```powershell
+.\iperf-servers.ps1 -BasePort 6000 -Cores 4  # Starts servers on ports 6000-6003
+```
+
+> [!NOTE]  
+> Press **`Ctrl+C`** to stop all servers and clean up processes.
+
 ### 2. On Windows Client (PowerShell as Admin)
 
 ```powershell
 # Clone repository
 git clone https://github.com/pip3-kill-me/iperf3-multicore-automation
-cd iperf3-multicore-automation\windows
+cd iperf3-network-test\windows
 
 # Install and run client
 .\install.ps1
@@ -43,7 +61,18 @@ iperf-client.ps1 -ServerIP 192.168.1.100 -Duration 60
 
 ## Detailed Usage
 
-### Windows Client Options
+### **On Debian Client (iperf-multicore-client.sh)**
+```bash
+./iperf-multicore-client.sh \-s \<IP\> \[-t \<seconds\>\] \[-w \<size\>\] \[-l \<size\>\]
+```
+| Parameter | Default | Description |
+| :---- | :---- | :---- |
+| `\-s, \--server` | **Required** | The IP address of the iperf3 server. |
+| `\-t, \--time` | 30 | The test duration for each client in seconds. |
+| `\-w, \--window` | 256k | The TCP window size (e.g., 512k, 1M). |
+| `\-l, \--length` | 64K | The size of the packet to send (e.g., 128K). |
+
+### **Windows Client Options**
 
 ```powershell
 .\iperf-client.ps1 -ServerIP <IP> `
