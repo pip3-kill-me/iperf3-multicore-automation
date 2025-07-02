@@ -21,7 +21,7 @@ This iPerf3 network testing suite provides automated, cross-platform scripts for
 
 ```bash
 # Clone repository
-git clone https://github.com/pip3-kill-me/iperf3-multicore-automation.git
+git clone https://github.com/yourrepo/iperf3-network-test.git
 cd iperf3-network-test/debian
 
 # Install and start server (as root)
@@ -33,7 +33,7 @@ iperf-server.sh
 
 ```powershell
 # Clone repository
-git clone https://github.com/pip3-kill-me/iperf3-multicore-automation.git
+git clone https://github.com/yourrepo/iperf3-network-test.git
 cd iperf3-network-test\windows
 
 # Install and run client
@@ -140,7 +140,9 @@ ethtool -K ethX gro off
 # Disable large receive offload
 ethtool -K ethX lro off
 ```
-
+> [!CAUTION]
+> Disabling large receive offload can cause unexpected behaviour in LACP.
+> 
 **Note:** For production environments (non-benchmarking), you may want to re-enable some of these features after testing.
 
 ### 2. MTU Configuration
