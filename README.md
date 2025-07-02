@@ -4,7 +4,7 @@
 ![PowerShell](https://img.shields.io/badge/powershell-5391FE?style=for-the-badge&logo=powershell&logoColor=white)
 ![Bash](https://img.shields.io/badge/Shell_Script-121011?style=for-the-badge&logo=gnu-bash&logoColor=white)
 
-# iPerf3 Network Performance Testing Suite
+# iPerf3 Multicore Network Performance Testing scripts
 
 A complete solution for testing network throughput between Windows and Linux systems with LACP bonding support on 10GbE.
 
