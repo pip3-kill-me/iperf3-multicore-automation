@@ -1,6 +1,9 @@
 #!/bin/bash
 # Filename: iperf-multicore-client.sh
 
+# Force C locale for predictable numeric formats (e.g., using . for decimals)
+export LC_ALL=C
+
 # --- Check for required commands ---
 for cmd in bc jq iperf3; do
     if ! command -v $cmd &> /dev/null; then
@@ -133,8 +136,8 @@ PROGRESS_PID=$!
 wait
 kill $PROGRESS_PID 2>/dev/null
 END_TIME=$(date +%s.%N)
-# Separate calculation from formatting for robustness
-RAW_DURATION=$(echo "$END_TIME - $START_TIME" | bc)
+# Use bc -l for floating point math
+RAW_DURATION=$(echo "$END_TIME - $START_TIME" | bc -l)
 ACTUAL_DURATION=$(printf "%.2f" "${RAW_DURATION:-0}")
 
 
@@ -164,9 +167,9 @@ for FILE in "$TMPDIR"/result-*.json; do
         LOST_PERCENT=$(printf "%.2f" "$LOST_RAW")
 
         RESULTS+=("Port $PORT: $BW Gbps | Jitter: $JITTER ms | Loss: $LOST_PERCENT%")
-        # Safely add to total
+        # Safely add to total, using bc -l for floating point math
         if [[ "$BW" =~ ^[0-9]+([.][0-9]+)?$ ]]; then
-            TOTAL_BW=$(echo "$TOTAL_BW + $BW" | bc)
+            TOTAL_BW=$(echo "$TOTAL_BW + $BW" | bc -l)
         fi
     else
         # TCP results parsing
@@ -183,9 +186,9 @@ for FILE in "$TMPDIR"/result-*.json; do
         BPS_RAW=$(echo "$SUM_BLOCK" | jq -r '.bits_per_second // 0')
         BW=$(printf "%.2f" "$(echo "$BPS_RAW / 1e9" | bc -l)")
         RESULTS+=("Port $PORT: $BW Gbps")
-        # Safely add to total
+        # Safely add to total, using bc -l for floating point math
         if [[ "$BW" =~ ^[0-9]+([.][0-9]+)?$ ]]; then
-            TOTAL_BW=$(echo "$TOTAL_BW + $BW" | bc)
+            TOTAL_BW=$(echo "$TOTAL_BW + $BW" | bc -l)
         fi
     fi
 done
