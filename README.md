@@ -3,7 +3,7 @@
 ![Debian](https://img.shields.io/badge/Debian-A81D33?style=for-the-badge&logo=debian&logoColor=white)
 ![Windows](https://img.shields.io/badge/Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white)
 
-```markdown
+```
 # iPerf3 Network Performance Testing Suite
 
 
