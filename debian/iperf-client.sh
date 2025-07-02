@@ -79,7 +79,7 @@ echo "Test duration: $DURATION seconds per client"
 
 # --- Create temp directory for results ---
 TMPDIR=$(mktemp -d)
-trap 'rm -rf "$TMPDIR"' EXIT
+trap 'rm -rf -- "$TMPDIR"' EXIT
 
 # --- Function to display progress bar ---
 progress_bar() {
@@ -207,7 +207,9 @@ echo "Cores used:      $CORES"
 echo "Test type:       $TEST_TYPE"
 echo "Target time:     $DURATION seconds"
 echo "Actual time:     $ACTUAL_DURATION seconds"
-echo "Total Bandwidth: $(printf "%.2f" "${TOTAL_BW:-0}") Gbps"
+# Format the final bandwidth number into a variable first to avoid shell parsing issues on exit
+TOTAL_BW_FORMATTED=$(printf "%.2f" "${TOTAL_BW:-0}")
+echo "Total Bandwidth: ${TOTAL_BW_FORMATTED} Gbps"
 ```powershell
 # Filename: iperf-multicore-client.ps1
 
