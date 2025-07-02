@@ -1,7 +1,7 @@
 ![Network Speed Test](https://img.shields.io/badge/network-testing-blue?style=for-the-badge)
 ![Multi-Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-lightgrey?style=for-the-badge)
 
-```markdown
+
 # iPerf3 Network Performance Testing Suite
 
 A complete solution for testing network throughput between Windows and Linux systems with LACP bonding support.
@@ -14,7 +14,7 @@ This iPerf3 network testing suite provides automated, cross-platform scripts for
 - 📊 **Detailed metrics** 
 - ⏱️ **Actual vs target time** comparison  
 - 🔗 **Port-specific results** for **bond** analysis  
-```
+
 ## Quick Start
 
 ### 1. On Linux Server (Debian/Ubuntu)
