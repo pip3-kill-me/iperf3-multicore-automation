@@ -3,8 +3,8 @@ Here's the complete, polished `README.md` for your iPerf3 network testing suite:
 ```markdown
 # iPerf3 Network Performance Testing Suite
 
-![Network Speed Test](https://img.shields.io/badge/network-testing-blue) 
-![Multi-Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-lightgrey)
+![Network Speed Test](https://img.shields.io/badge/network-testing-blue?style=for-the-badge)
+![Multi-Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-lightgrey?style=for-the-badge)
 ![Debian](https://img.shields.io/badge/Debian-A81D33?style=for-the-badge&logo=debian&logoColor=white)
 ![Windows](https://img.shields.io/badge/Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white)
 
