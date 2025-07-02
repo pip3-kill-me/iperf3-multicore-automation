@@ -157,14 +157,16 @@ for FILE in "$TMPDIR"/result-*.json; do
             RESULTS+=("Port $PORT: ERROR - No UDP summary")
             continue
         fi
-        # Default to 0 if value is null, then format
+        # Default to 0 if value is null
         BPS_RAW=$(echo "$SUM_BLOCK" | jq -r '.bits_per_second // 0')
         JITTER_RAW=$(echo "$SUM_BLOCK" | jq -r '.jitter_ms // 0')
         LOST_RAW=$(echo "$SUM_BLOCK" | jq -r '.lost_percent // 0')
 
-        BW=$(printf "%.2f" "$(echo "$BPS_RAW / 1e9" | bc -l)")
-        JITTER=$(printf "%.3f" "$JITTER_RAW")
-        LOST_PERCENT=$(printf "%.2f" "$LOST_RAW")
+        # Separate calculation from formatting for robustness
+        BW_CALC=$(echo "scale=2; $BPS_RAW / 1000000000" | bc -l)
+        BW=$(printf "%.2f" "${BW_CALC:-0}")
+        JITTER=$(printf "%.3f" "${JITTER_RAW:-0}")
+        LOST_PERCENT=$(printf "%.2f" "${LOST_RAW:-0}")
 
         RESULTS+=("Port $PORT: $BW Gbps | Jitter: $JITTER ms | Loss: $LOST_PERCENT%")
         # Safely add to total, using bc -l for floating point math
@@ -182,9 +184,13 @@ for FILE in "$TMPDIR"/result-*.json; do
             RESULTS+=("Port $PORT: ERROR - No TCP summary")
             continue
         fi
-        # Default to 0 if value is null, then format
+        # Default to 0 if value is null
         BPS_RAW=$(echo "$SUM_BLOCK" | jq -r '.bits_per_second // 0')
-        BW=$(printf "%.2f" "$(echo "$BPS_RAW / 1e9" | bc -l)")
+        
+        # Separate calculation from formatting for robustness
+        BW_CALC=$(echo "scale=2; $BPS_RAW / 1000000000" | bc -l)
+        BW=$(printf "%.2f" "${BW_CALC:-0}")
+
         RESULTS+=("Port $PORT: $BW Gbps")
         # Safely add to total, using bc -l for floating point math
         if [[ "$BW" =~ ^[0-9]+([.][0-9]+)?$ ]]; then
