@@ -79,7 +79,8 @@ try {
     Write-Progress -Activity "Running iperf3 Tests" -Completed
 
     Write-Host "Waiting for all tests to complete..."
-    $Processes | Wait-Process -Timeout (10)
+    # Wait for processes, but catch the timeout exception so the script can continue
+    $Processes | Wait-Process -Timeout ($Duration + 5) -ErrorAction SilentlyContinue
     $Stopwatch.Stop()
 
     # --- Process Results ---
@@ -150,7 +151,18 @@ try {
 
 } finally {
     # --- Cleanup ---
+    # Forcefully stop any lingering iperf3 processes that were started by this script
+    Write-Host "Stopping any lingering iperf3 processes..."
+    foreach ($p in $Processes) {
+        try {
+            Stop-Process -Id $p.Id -Force -ErrorAction Stop
+        } catch {
+            # Ignore errors if the process already stopped
+        }
+    }
+    # Now that processes are stopped, cleanup should succeed
     if (Test-Path $TempDir.FullName) {
+        Write-Host "Cleaning up temporary directory..."
         Remove-Item -Recurse -Force $TempDir.FullName
     }
 }
