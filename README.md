@@ -17,6 +17,29 @@ This iPerf3 network testing suite provides automated, cross-platform scripts for
 - ⏱️ **Actual vs target time** comparison
 - 🔗 **Port-specific results** for **bond** analysis
 
+# Table of Contents
+
+- [iPerf3 Multicore Network Performance Testing scripts](#iperf3-multicore-network-performance-testing-scripts)
+  - [✨ Features](#-features)
+  - [Quick Start](#quick-start)
+    - [1. Server Setup (Debian/Ubuntu)](#1-server-setup-debianubuntu)
+    - [2. Server Setup (Windows)](#2-server-setup-windows)
+    - [2. On Windows Client (PowerShell as Admin)](#2-on-windows-client-powershell-as-admin)
+  - [Detailed Usage](#detailed-usage)
+    - [On Debian Client (iperf-multicore-client.sh)](#on-debian-client-iperf-multicore-clientsh)
+    - [Windows Client Options](#windows-client-options)
+    - [Linux Server Management](#linux-server-management)
+  - [Technical Details](#technical-details)
+  - [Troubleshooting](#troubleshooting)
+  - [Tuning](#tuning)
+    - [Overview](#overview)
+    - [Key Tuning Parameters](#key-tuning-parameters)
+    - [Windows Network Tuning for High-Performance iperf3 Testing with HP NC523SFP](#windows-network-tuning-for-high-performance-iperf3-testing-with-hp-nc523sfp)
+    - [Important Notes](#important-notes)
+  - [Troubleshooting](#troubleshooting-1)
+    - [Common Errors](#common-errors)
+  - [License](#license)
+
 ## Quick Start
 
 ### 1. Server Setup (Debian/Ubuntu)
@@ -62,7 +85,7 @@ iperf-client.ps1 -ServerIP 192.168.1.100 -Duration 60
 
 ## Detailed Usage
 
-### **On Debian Client (iperf-multicore-client.sh)**
+### **On Debian Client (iperf-client.sh)**
 ```bash
 ./iperf-multicore-client.sh -s <address> -t <seconds> -w <size> -l <size>
 ```
@@ -75,7 +98,7 @@ iperf-client.ps1 -ServerIP 192.168.1.100 -Duration 60
 | `\-w, \--window` | 256k | The TCP window size (e.g., 512k, 1M). |
 | `\-l, \--length` | 64K | The size of the packet to send (e.g., 128K). |
 
-### **Windows Client Options**
+### **On Windows Client (iperf-client.ps1)**
 
 ```powershell
 .\iperf-client.ps1 -ServerIP <IP> 
