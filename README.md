@@ -407,6 +407,55 @@ Get-NetAdapter | Select Name, DriverVersion, NdisVersion
 - Reboot may be required for some settings to take effect
 - Document all changes made for reproducibility
 
+## **Troubleshooting**
+
+This guide covers common errors you might encounter when running the scripts and how to resolve them.
+```bash
+Error: <command> is not installed. (Debian/Linux)
+```
+- **Cause:** This error appears on Debian/Ubuntu if one of the required command-line tools (`iperf3`, `jq`, `bc`) is missing from your system.  
+- **Solution:** Install the missing dependencies by running the command provided by the script:  
+  ```bash
+  sudo apt update && sudo apt install -y iperf3 jq bc
+  ```
+
+```bash
+Port <number>: ERROR - unable to connect to server...
+```
+- **Cause:** This is the most common `iperf3` error. It means the client on that specific port could not establish a connection with the server. The most frequent reasons are:  
+  1. **Firewall:** A firewall on the server, the client, or somewhere in between is blocking the connection on that port.  
+  2. **Server Not Running:** The `iperf3 -s` command is not running on the server machine, or it has crashed.  
+  3. **Server Overload:** You are running a test with many parallel streams (especially UDP), and the server is overwhelmed, causing it to refuse some connections.  
+- **Solution:**  
+  1. Ensure the `iperf3 -s` process is active on the server.  
+  2. Check firewall rules on both the client and server to ensure ports `5201` and up are allowed.  
+  3. If this happens during a UDP test with many cores, the server is likely being overloaded. The staggered start in the latest scripts should help, but you may need to test with fewer cores or a lower UDP bandwidth (`-b` flag).
+
+```bash
+Port <number>: ERROR - Result file is empty. (The iperf3 server may be overloaded...)
+```
+- **Cause:** This error (primarily on the PowerShell script) indicates that an `iperf3.exe` process started but exited or crashed instantly without writing any data to its output file. This is a strong sign that the `iperf3` server is overloaded and is not responding correctly to the connection request for that port.  
+- **Solution:** This has the same root cause as the "connection refused" error. The server is overwhelmed. The staggered start in the script helps, but you may need to reduce the load.
+
+```bash
+Port <number>: ERROR - No traffic received (possible bandwidth overload)
+```
+- **Cause:** This happens during a UDP test when a connection is established, but the server reports that zero packets were actually received. The most common cause is that the target UDP bandwidth (set with the `-b` flag) is far higher than what the network path can actually handle, causing a router or switch to drop all the traffic.  
+- **Solution:** Rerun the UDP test with a lower, more realistic bandwidth. For example, if a `-b 1G` test fails, try again with `-b 500M`.
+
+```PowerShell
+Wait-Process : This command stopped operation because process... (PowerShell)
+```
+- **Cause:** This PowerShell-specific error occurs when one or more `iperf3.exe` processes do not exit cleanly when the test duration is over. The script waits a few extra seconds, then times out. This is usually a symptom of the server overload issues described above.  
+- **Solution:** The latest version of the script automatically handles this by forcefully stopping any lingering processes. While you will still see the error, the script will now clean up correctly and not leave hanging processes or locked files.
+
+```Powershell
+Remove-Item : Cannot remove item... The process cannot access the file... (PowerShell)
+```
+- **Cause:** This error is a direct result of the `Wait-Process` timeout. Because a lingering `iperf3.exe` process did not exit, it still has a lock on its output file, and PowerShell cannot delete it.  
+- **Solution:** This is also fixed in the latest script version. By forcefully stopping the lingering processes, the file locks are released, and the cleanup can complete successfully.
+
+
 ## License
 
 MIT License - Free for personal and commercial use
