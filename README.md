@@ -70,6 +70,8 @@ iperf-client.ps1 -ServerIP 192.168.1.100 -Duration 60
 | :---- | :---- | :---- |
 | `\-s, \--server` | **Required** | The IP address of the iperf3 server. |
 | `\-t, \--time` | 30 | The test duration for each client in seconds. |
+| `\-u, \--udp` |  | UDP mode. |
+| `\-b, \--bandwidth` | 1G | Bandwidth for UDP mode. |
 | `\-w, \--window` | 256k | The TCP window size (e.g., 512k, 1M). |
 | `\-l, \--length` | 64K | The size of the packet to send (e.g., 128K). |
 
@@ -84,7 +86,9 @@ iperf-client.ps1 -ServerIP 192.168.1.100 -Duration 60
 
 | Parameter     | Default  | Description                    |
 | ------------- | -------- | ------------------------------ |
-| `-ServerIP`   | Required | Linux server IP address        |
+| `-ServerIP`   | Required | Server IP address              |
+| `-Udp     `   |          | UDP mode                       |
+| `-Bandwidth`  | 1G       | Bandwidth for UDP mode         |
 | `-Duration`   | 30       | Test duration in seconds       |
 | `-WindowSize` | 2M       | TCP window size (e.g., 1M, 8M) |
 | `-PacketSize` | 64K      | Packet size (e.g., 128K)       |
